@@ -1,5 +1,5 @@
 import express from "express";
-import logger from "./logger";
+import logger, { als } from "./logger";
 
 const app = express();
 
@@ -10,6 +10,14 @@ app.use((req, _res, next) => {
   req.requestNumber = ++requestCounter;
 
   next();
+});
+
+app.use((req, _res, next) => {
+  const store = new Map([
+    ["requestId", req.requestId],
+    ["requestNumber", req.requestNumber],
+  ]);
+  als.run(store, () => next());
 });
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -32,10 +40,7 @@ app.get("/", async (req, res) => {
 
   await callMs();
 
-  logger.info(
-    { requestId: req.requestId, requestNumber: req.requestNumber },
-    "Request finished",
-  );
+  logger.info("Request finished");
   res.send("Hello World");
 });
 
